@@ -18,7 +18,7 @@ def get_args_parser():
     parser.add_argument('--line', default=2, type=int,
                         help="line number of anchor points")
 
-    parser.add_argument('--img-size', nargs='+', type=int, default=[1280, 1280], help='image size')  # height, width
+    parser.add_argument('--img-size', nargs='+', type=int, default=[480, 640], help='image size')  # height, width
 
     parser.add_argument('--batch-size', type=int, default=1, help='batch size')
 
@@ -49,22 +49,23 @@ if __name__ == '__main__':
         model.load_state_dict(checkpoint['model'])
     model.eval()
     model_name = args.weight_path.replace('pth', 'onnx')
-    input_data = torch.randn(args.batch_size, 3, *args.img_size).to(device)
+    input_data = [torch.randn(args.batch_size, 3, *args.img_size).to(device),
+                  torch.randn(args.batch_size, 3, *args.img_size).to(device)]
     output = model(input_data)
 
     torch.cuda.empty_cache()
-    time.sleep(20)
-    input_name = 'input'
+    input_names = ['input1', 'input2']
     pred_logits = 'pred_logits'
     pred_points = 'pred_points'
     torch.onnx.export(model,
                       input_data,
                       model_name,
                       opset_version=11,
-                      input_names=[input_name],
+                      input_names=input_names,
                       output_names=[pred_logits, pred_points],
                       dynamic_axes={
-                          input_name: {0: 'batch_size'},
+                          'input1': {0: 'batch_size'},
+                          'input2': {0: 'batch_size'},
                           pred_logits: {0: 'batch_size'},
                           pred_points: {0: 'batch_size'}}
                       )
@@ -87,3 +88,4 @@ if __name__ == '__main__':
     # print(onnx.helper.printable_graph(onnx_model.graph))  # print a human readable model
     onnx.save(onnx_model, model_name)
     print('ONNX export success, saved as %s' % model_name)
+
