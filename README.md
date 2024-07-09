@@ -35,3 +35,6 @@ python3 run_test.py
 ```
 python3 export.py --weight_path weights/best_mae.pth
 ```
+
+### Citation:
+[P2PNet](https://github.com/TencentYoutuResearch/CrowdCounting-P2PNet) and [RGBT-CC](https://github.com/chen-judge/RGBTCrowdCounting)
