@@ -1,11 +1,7 @@
 import argparse
 import datetime
 import random
-import time
-from pathlib import Path
-
-import torch
-from torch.utils.data import DataLoader, DistributedSampler
+from torch.utils.data import DataLoader
 
 from crowd_datasets import build_dataset
 from engine import *
@@ -54,7 +50,7 @@ def get_args_parser():
 
     # dataset parameters
     parser.add_argument('--dataset_file', default='SHHA')
-    parser.add_argument('--data_root', default='/home/yn/DATA-8T/OrgData/CrowdCountingDataset/p2p_RGBTCrowdCounting/',
+    parser.add_argument('--data_root', default='',
                         help='path where the dataset is')
     
     parser.add_argument('--output_dir', default='./logs',

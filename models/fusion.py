@@ -66,11 +66,11 @@ class Block(nn.Module):
             self.shared_conv = make_layers(cfg, in_channels=in_channels, d_rate=self.d_rate)
 
         channels = cfg[0]
-        self.rgb_msc = MSC(channels)
-        self.t_msc = MSC(channels)
+        self.rgb_msc = MSC(channels)  # 上下文信息提取
+        self.t_msc = MSC(channels)  # 上下文信息提取
         if first_block is False:
             self.shared_fuse_msc = MSC(channels)
-        self.shared_distribute_msc = MSC(channels)
+        self.shared_distribute_msc = MSC(channels)  # 上下文信息提取
 
         self.rgb_fuse_1x1conv = nn.Conv2d(channels, channels, kernel_size=1)
         self.t_fuse_1x1conv = nn.Conv2d(channels, channels, kernel_size=1)
@@ -85,11 +85,12 @@ class Block(nn.Module):
         else:
             shared = self.shared_conv(shared)
 
-        new_RGB, new_T, new_shared = self.fuse(RGB, T, shared)
+        new_RGB, new_T, new_shared = self.fuse(RGB, T, shared)  # IADM模块
         return new_RGB, new_T, new_shared
 
     def fuse(self, RGB, T, shared):
 
+        # 三个分支的上下文信息提取
         RGB_m = self.rgb_msc(RGB)
         T_m = self.t_msc(T)
         if self.first_block:
@@ -97,12 +98,14 @@ class Block(nn.Module):
         else:
             shared_m = self.shared_fuse_msc(shared)
 
+        # 信息聚合传递IAT，对应论文中的4(a)
         rgb_s = self.rgb_fuse_1x1conv(RGB_m - shared_m)
         rgb_fuse_gate = torch.sigmoid(rgb_s)
         t_s = self.t_fuse_1x1conv(T_m - shared_m)
         t_fuse_gate = torch.sigmoid(t_s)
         new_shared = shared + (RGB_m - shared_m) * rgb_fuse_gate + (T_m - shared_m) * t_fuse_gate
 
+        # 信息分布传递IDT，对应论文中的4(b)
         new_shared_m = self.shared_distribute_msc(new_shared)
         s_rgb = self.rgb_distribute_1x1conv(new_shared_m - RGB_m)
         rgb_distribute_gate = torch.sigmoid(s_rgb)
